@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 // 1. Middlewares globales (CORS y lectura de JSON/formularios)
 app.use(cors({
-    origin: 'http://69.6.203.183',
+    origin: '*',
     credentials: true
 }));
 app.use(express.json());
