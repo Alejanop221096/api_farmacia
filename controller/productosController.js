@@ -54,9 +54,11 @@ const getProductosMasVistos = async (req, res) => {
       LEFT JOIN brands b ON p.brand_id = b.id
       ORDER BY p.visitas DESC LIMIT 10;
     `;
+    
     const [rows] = await conexion.execute(query);
     await conexion.end();
     res.json({ success: true, mensaje: 'Productos más vistos obtenidos', data: rows });
+    
   } catch (error) {
     console.error('Error al obtener productos más vistos:', error);
     if (conexion) await conexion.end();
@@ -231,8 +233,64 @@ const deleteBrand = async (req, res) => {
   }
 };
 
+const incrementProductView = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+      conexion = await conectarDB();
+    // Ejemplo usando SQL (ajusta según tu ORM o base de datos)
+    // Supongamos que tu columna de visitas se llama 'views' o 'search_count'
+    const query = 'UPDATE products SET visitas = visitas + 1 WHERE id = ?';
+    await conexion.query(query, [id]); // O tu método de base de datos habitual
+
+    res.json({ success: true, message: 'Vista incrementada correctamente' });
+  } catch (error) {
+    console.error('Error al incrementar vista:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+const getProductoById = async (req, res) => {
+  let conexion;
+  try {
+    const { id } = req.params;
+    conexion = await conectarDB();
+    
+    const query = `
+      SELECT 
+        p.id, 
+        p.name, 
+        p.price, 
+        p.discountPercentage, 
+        p.imageUrl, 
+        p.visitas,
+        p.subcategory_id,
+        p.brand_id,
+        s.category_id, -- Por si necesitas la categoría asociada a la subcategoría
+        s.name AS subcategory, 
+        b.name AS brand
+      FROM products p
+      LEFT JOIN subcategories s ON p.subcategory_id = s.id
+      LEFT JOIN brands b ON p.brand_id = b.id
+      WHERE p.id = ?;
+    `;
+    
+    const [rows] = await conexion.execute(query, [id]);
+    await conexion.end();
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, mensaje: 'Producto no encontrado' });
+    }
+
+    res.json({ success: true, mensaje: 'Producto obtenido con éxito', data: rows[0] });
+  } catch (error) {
+    console.error('Error al obtener el producto por ID:', error);
+    if (conexion) await conexion.end();
+    res.status(500).json({ success: false, mensaje: 'Error al consultar', error: error.message });
+  }
+};
 module.exports = {
   getProductos, 
+  getProductoById,
   getCategoriasConSubcategorias, 
   getProductosMasVistos, 
   getSubcategorias,
@@ -245,5 +303,6 @@ module.exports = {
   deleteProduct, 
   deleteCategory, 
   deleteSubcategory, 
-  deleteBrand
+  deleteBrand,
+  incrementProductView
 };

@@ -1,25 +1,31 @@
 const express = require('express');
-const cors = require('cors'); // <-- 1. Importa cors
+const path = require('path');
+const cors = require('cors'); 
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const rutasPrincipales = require('./routes/routes');
-
-// 2. Configura e implementa CORS para permitir peticiones desde Angular (puerto 4200)
+// 1. Middlewares globales (CORS y lectura de JSON/formularios)
 app.use(cors({
-  origin: 'http://localhost:4200',
-  credentials: true
+    origin: 'http://localhost:4200',
+    credentials: true
 }));
-
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 2. Carpeta pública para las imágenes
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// 3. Rutas principales
+const rutasPrincipales = require('./routes/routes');
 app.use('/api', rutasPrincipales);
 
 app.get('/', (req, res) => {
-  res.send('servidor corriendo');
+    res.send('Servidor corriendo');
 });
 
+// 4. Iniciar servidor
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
